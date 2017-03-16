@@ -3,33 +3,27 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.template.defaultfilters import slugify
 from taggit.managers import TaggableManager
+import itertools
+
 
 class PublishedManager(models.Manager):
     def get_queryset(self):
-        return super(PublishedManager, self).get_queryset().filter(status='published')
+        return super(PublishedManager, self).get_queryset()
+
 
 class Post(models.Model):
-    STATUS_CHOICES = (
-        ('draft', 'Draft'),
-        ('published', 'Published'),
-    )
-    
     title = models.CharField(max_length=250)
-    slug = models.CharField(max_length=250,
-                            unique_for_date='publish')
-    author = models.ForeignKey(User,
-                               related_name='blog_posts')
+    slug = models.SlugField(unique=True)
+    author = models.CharField(max_length=100)
     body = models.TextField()
     publish = models.DateTimeField(default=timezone.now)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    status = models.CharField(max_length=10,
-                              choices=STATUS_CHOICES,
-                              default='draft')
     
     objects = models.Manager()    #default manager
-    published = PublishedManager()#custom manager 
+    published = PublishedManager()#custom manager
     
     class Meta:
         ordering = ('-publish',)
@@ -44,9 +38,19 @@ class Post(models.Model):
                              self.publish.strftime('%d'),
                              self.slug]
                        )
-    
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.slug = slugify(self.title)
+            for x in itertools.count(1):
+                if not Post.objects.filter(slug=self.slug).exists():
+                    break
+                self.slug = '%s-%d' % (self.slug, x)
+            super(Post, self).save(*args, **kwargs)
+
     tags = TaggableManager()
-    
+
+
 class Comment(models.Model):
     post = models.ForeignKey(Post, related_name='comments')
     name = models.CharField(max_length=80)

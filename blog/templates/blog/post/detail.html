@@ -49,7 +49,7 @@
             {{ comment.body|markdown }}
         </div>
     {% empty %}
-        <p>There are no comments yet.</p>
+        <p id="empty-comment">There are no comments yet.</p>
     {% endfor %}
     
     <!-- make a new comment -->

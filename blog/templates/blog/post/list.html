@@ -8,7 +8,7 @@
     
 
     {% if tag %}
-        <h2>Post tagged with: {{ tag.name }}</h2>
+        <h2>Posts tagged with: {{ tag.name }}</h2>
     {% endif %}
 
     {% for post in posts %}
@@ -36,7 +36,10 @@
          </div>
     {% endfor %}
 
-    
-    {% include "pagination.html" with page=posts %}
-    
+    {% if paginator_flag %}
+        {% include "pagination.html" with page=posts %}
+    {% else %}
+        {% include "pagination.html" with page=page_obj %}
+    {% endif %}
+
 {% endblock %}
